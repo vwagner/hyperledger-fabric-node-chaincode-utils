@@ -160,7 +160,8 @@ const TransactionHelper = class {
             return entry.toBuffer().toString('utf8');
         });
 
-        this.logger.debug(`Chaincode parent args: ${args}`);
+        // Don't log PII
+        // this.logger.debug(`Chaincode parent args: ${args}`);
         const idxOfCC = args[0].indexOf(chaincodeName);
         const idxOfFunc = args[0].indexOf(functionName);
 
@@ -294,7 +295,8 @@ const TransactionHelper = class {
             bufferedPayload = Buffer.from(JSON.stringify(payload));
         }
 
-        this.logger.debug(`Setting Event ${name} with payload ${JSON.stringify(payload)}`);
+        // Don't log PII
+        // this.logger.debug(`Setting Event ${name} with payload ${JSON.stringify(payload)}`);
         return this.stub.setEvent(name, bufferedPayload);
     }
 

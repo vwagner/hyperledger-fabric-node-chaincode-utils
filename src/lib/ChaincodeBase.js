@@ -55,7 +55,7 @@ class ChaincodeBase {
                 parsedParams.push(JSON.parse(param));
             } catch (err) {
                 // if it fails fall back to original param
-                this.logger.error(`failed to parse param ${param}`);
+                // regular strings fall into this category, so do not log them as errors
                 parsedParams.push(param);
             }
         });
@@ -77,12 +77,10 @@ class ChaincodeBase {
      */
     async Invoke(stub) {
         try {
-            this.logger.info(`=========== Invoked Chaincode ${this.name} ===========`);
-            this.logger.info(`Transaction ID: ${stub.getTxID()}`);
-            this.logger.info(util.format('Args: %j', stub.getArgs()));
+            this.logger.info(`=========== Invoked Chaincode ${this.name} : ${stub.getTxID()} ===========`);
+            // Don't log args or return value... It leaks PII
 
             const ret = stub.getFunctionAndParameters();
-            this.logger.info(ret);
 
             const method = this[ret.fcn];
             if (!method) {
