@@ -77,10 +77,11 @@ class ChaincodeBase {
      */
     async Invoke(stub) {
         try {
-            this.logger.info(`=========== Invoked Chaincode ${this.name} : ${stub.getTxID()} ===========`);
-            // Don't log args or return value... It leaks PII
 
             const ret = stub.getFunctionAndParameters();
+
+            this.logger.info(`=========== Invoked Chaincode ${this.name} : ${ret.fcn} : ${stub.getTxID()} ===========`);
+            // Don't log args or return value... It leaks PII
 
             const method = this[ret.fcn];
             if (!method) {
