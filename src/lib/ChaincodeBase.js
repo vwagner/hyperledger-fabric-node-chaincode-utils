@@ -64,6 +64,17 @@ class ChaincodeBase {
     }
 
     /**
+     * Prep payload for return to caller
+     * @param {*} payload 
+     */
+    preparePayload(payload) {
+        if (!Buffer.isBuffer(payload)) {
+            return Buffer.from(payload ? JSON.stringify(normalizePayload(payload)) : '');
+        }
+        return payload;
+    }
+
+    /**
      * Called when Instantiating chaincode
      */
     async Init() {
@@ -102,10 +113,7 @@ class ChaincodeBase {
             }
 
             let payload = await method.call(this, stub, this.getTransactionHelperFor(stub), ...parsedParameters);
-
-            if (!Buffer.isBuffer(payload)) {
-                payload = Buffer.from(payload ? JSON.stringify(normalizePayload(payload)) : '');
-            }
+            payload = preparePayload(payload);
 
             return this.shim.success(payload);
         } catch (err) {
