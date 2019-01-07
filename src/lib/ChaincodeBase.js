@@ -98,9 +98,9 @@ class ChaincodeBase {
      * Basic implementation that redirects Invocations to the right functions on this instance
      */
     async Invoke(stub) {
-        try {
+        const ret = stub.getFunctionAndParameters();
 
-            const ret = stub.getFunctionAndParameters();
+        try {
 
             this.logger.info(`=========== Invoked Chaincode ${this.name} : ${ret.fcn} : ${stub.getTxID()} ===========`);
             // Don't log args or return value... It leaks PII
@@ -117,7 +117,7 @@ class ChaincodeBase {
             let parsedParameters;
             let txHelper;
             try {
-                setup = this.setupInvoke(stub, ret.params);
+                const setup = this.setupInvoke(stub, ret.params);
                 parsedParameters = setup.parsedParameters;
                 txHelper = setup.txHelper;
             } catch (err) {
