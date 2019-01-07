@@ -77,7 +77,7 @@ class ChaincodeBase {
      * Prep payload for return to caller
      * @param {*} payload 
      */
-    prepareResponsePayload(payload) {
+    prepareResponsePayload(payload, txHelper) {
 
         if (!Buffer.isBuffer(payload)) {
             return Buffer.from(payload ? JSON.stringify(normalizePayload(payload)) : '');
@@ -127,7 +127,7 @@ class ChaincodeBase {
             }
 
             let payload = await method.call(this, stub, txHelper, ...parsedParameters);
-            payload = this.prepareResponsePayload(payload);
+            payload = this.prepareResponsePayload(payload, txHelper);
 
             this.logger.info(`=========== Invoke Chaincode COMPLETE ${this.name} : ${ret.fcn} : ${stub.getTxID()} ===========`);
 
