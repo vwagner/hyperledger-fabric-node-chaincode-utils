@@ -144,6 +144,7 @@ class ChaincodeBase {
             }
             this.logger.error(stacktrace);
             this.logger.error(`Data of error ${err.message}: ${JSON.stringify(err.data)}`);
+            this.logger.error(`=========== Invoke Chaincode FAILED ${this.name} : ${ret.fcn} : ${stub.getTxID()} ===========`);
 
             return this.shim.error(error.serialized);
         }
