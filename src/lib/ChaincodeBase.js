@@ -43,6 +43,16 @@ class ChaincodeBase {
     }
 
     /**
+     * Responsible for parsing params and constructing the transaction helper
+     */
+    setupInvoke(stub, params) {
+        return {
+            parsedParameters: this.parseParameters(params),
+            txHelper: this.getTransactionHelperFor(stub)
+        };
+    }
+
+    /**
      * @param {Array} params
      * @returns the parsed parameters
      */
@@ -67,7 +77,7 @@ class ChaincodeBase {
      * Prep payload for return to caller
      * @param {*} payload 
      */
-    preparePayload(payload) {
+    prepareResponsePayload(payload) {
 
         if (!Buffer.isBuffer(payload)) {
             return Buffer.from(payload ? JSON.stringify(normalizePayload(payload)) : '');
@@ -105,16 +115,19 @@ class ChaincodeBase {
             }
 
             let parsedParameters;
+            let txHelper;
             try {
-                parsedParameters = this.parseParameters(ret.params);
+                setup = this.setupInvoke(stub, ret.params);
+                parsedParameters = setup.parsedParameters;
+                txHelper = setup.txHelper;
             } catch (err) {
                 throw new ChaincodeError(ERRORS.PARSING_PARAMETERS_ERROR, {
                     'message': err.message
                 });
             }
 
-            let payload = await method.call(this, stub, this.getTransactionHelperFor(stub), ...parsedParameters);
-            payload = this.preparePayload(payload);
+            let payload = await method.call(this, stub, txHelper, ...parsedParameters);
+            payload = this.prepareResponsePayload(payload);
 
             return this.shim.success(payload);
         } catch (err) {
