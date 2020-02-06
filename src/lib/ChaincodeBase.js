@@ -43,6 +43,16 @@ class ChaincodeBase {
     }
 
     /**
+     * Responsible for parsing params and constructing the transaction helper
+     */
+    setupInvoke(stub, params) {
+        return {
+            parsedParameters: this.parseParameters(params),
+            txHelper: this.getTransactionHelperFor(stub)
+        };
+    }
+
+    /**
      * @param {Array} params
      * @returns the parsed parameters
      */
@@ -64,6 +74,18 @@ class ChaincodeBase {
     }
 
     /**
+     * Prep payload for return to caller
+     * @param {*} payload 
+     */
+    prepareResponsePayload(payload, txHelper) {
+
+        if (!Buffer.isBuffer(payload)) {
+            return Buffer.from(payload ? JSON.stringify(normalizePayload(payload)) : '');
+        }
+        return payload;
+    }
+
+    /**
      * Called when Instantiating chaincode
      */
     async Init() {
@@ -76,9 +98,9 @@ class ChaincodeBase {
      * Basic implementation that redirects Invocations to the right functions on this instance
      */
     async Invoke(stub) {
-        try {
+        const ret = stub.getFunctionAndParameters();
 
-            const ret = stub.getFunctionAndParameters();
+        try {
 
             this.logger.info(`=========== Invoked Chaincode ${this.name} : ${ret.fcn} : ${stub.getTxID()} ===========`);
             // Don't log args or return value... It leaks PII
@@ -93,19 +115,21 @@ class ChaincodeBase {
             }
 
             let parsedParameters;
+            let txHelper;
             try {
-                parsedParameters = this.parseParameters(ret.params);
+                const setup = this.setupInvoke(stub, ret.params);
+                parsedParameters = setup.parsedParameters;
+                txHelper = setup.txHelper;
             } catch (err) {
                 throw new ChaincodeError(ERRORS.PARSING_PARAMETERS_ERROR, {
                     'message': err.message
                 });
             }
 
-            let payload = await method.call(this, stub, this.getTransactionHelperFor(stub), ...parsedParameters);
+            let payload = await method.call(this, stub, txHelper, ...parsedParameters);
+            payload = this.prepareResponsePayload(payload, txHelper);
 
-            if (!Buffer.isBuffer(payload)) {
-                payload = Buffer.from(payload ? JSON.stringify(normalizePayload(payload)) : '');
-            }
+            this.logger.info(`=========== Invoke Chaincode COMPLETE ${this.name} : ${ret.fcn} : ${stub.getTxID()} ===========`);
 
             return this.shim.success(payload);
         } catch (err) {
@@ -120,6 +144,7 @@ class ChaincodeBase {
             }
             this.logger.error(stacktrace);
             this.logger.error(`Data of error ${err.message}: ${JSON.stringify(err.data)}`);
+            this.logger.error(`=========== Invoke Chaincode FAILED ${this.name} : ${ret.fcn} : ${stub.getTxID()} ===========`);
 
             return this.shim.error(error.serialized);
         }
